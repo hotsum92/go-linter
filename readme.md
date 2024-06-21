@@ -18,5 +18,5 @@ gotype -ast ./main.go
 
 ```
 go build -o analysis.o ./main.go
-go vet -vettool=analysis.o ./main.go
+go vet -vettool=analysis.o ./sample/main.go
 ```
