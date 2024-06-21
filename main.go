@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
 
 	"golang.org/x/tools/go/analysis"
@@ -27,7 +28,36 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		f := n.(*ast.FuncDecl)
-		pass.Reportf(f.Pos(), `found %s`, f.Name)
+
+		if f.Name.Name == "main" {
+
+			pass.Reportf(f.Pos(), "found main function")
+
+			ast.Inspect(f, func(n ast.Node) bool {
+				if n == nil {
+					return false
+				}
+
+				ast.Print(pass.Fset, n)
+				pass.Reportf(n.Pos(), fmt.Sprintf("%#v", n))
+				switch n := n.(type) {
+				case *ast.CallExpr:
+					if sel, ok := n.Fun.(*ast.SelectorExpr); ok {
+						if id, ok := sel.X.(*ast.Ident); ok {
+							if id.Name == "fmt" && sel.Sel.Name == "Println" {
+								pass.Reportf(n.Pos(), "found fmt.Println")
+							}
+						}
+					}
+
+					return false
+				}
+
+				return true
+			})
+
+			return
+		}
 	})
 
 	return nil, nil
