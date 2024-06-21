@@ -1,27 +1,55 @@
 package main
 
 import (
-	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/token"
+	"go/types"
+	"path/filepath"
+	"reflect"
+	"strings"
+
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/unitchecker"
 )
 
-func Parse(filename string) error {
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, filename, nil, parser.Mode(0))
+var Analyzer = &analysis.Analyzer{
+	Name: "FindHoge",
+	Doc:  "Find hoge",
+	Run:  run,
+	FactTypes: []analysis.Fact{
+		new(HogeFuncFact),
+	},
+	Requires:   []*analysis.Analyzer{},
+	ResultType: reflect.TypeOf(new(HogeFileMap)),
+}
 
-	if err != nil {
-		return err
-	}
+type HogeFuncFact struct{}
 
-	for _, d := range f.Decls {
-		ast.Print(fset, d)
-		fmt.Println()
+func (HogeFuncFact) AFact() {}
+
+type HogeFileMap map[*ast.File]struct{}
+
+func run(pass *analysis.Pass) (interface{}, error) {
+	var res HogeFileMap = make(map[*ast.File]struct{})
+	for _, f := range pass.Files {
+		filePath := pass.Fset.File(f.Pos()).Name()
+		fileName := filepath.Base(filePath)
+		if strings.HasPrefix(fileName, "hoge") {
+			res[f] = struct{}{}
+		}
+
+		for _, decl := range f.Decls {
+			if decl, ok := decl.(*ast.FuncDecl); ok && strings.HasPrefix(decl.Name.Name, "Hoge") {
+				if obj, ok := pass.TypesInfo.Defs[decl.Name].(*types.Func); ok {
+					pass.ExportObjectFact(obj, new(HogeFuncFact))
+				}
+			}
+		}
 	}
-	return nil
+	return &res, nil
 }
 
 func main() {
-	Parse("sample/main.go")
+	unitchecker.Main(
+		Analyzer,
+	)
 }

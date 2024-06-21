@@ -11,3 +11,12 @@
 go install golang.org/x/tools/cmd/gotype
 gotype -ast ./main.go
 ```
+
+## unitchecker
+
+[Goのanalysisパッケージを使った静的解析を実装する](https://zenn.dev/micin/articles/2023-12-09_ykobayashi_golang_static_analysis)
+
+```
+go build -o analysis.o ./main.go
+go vet -vettool=analysis.o ./main.go
+```
