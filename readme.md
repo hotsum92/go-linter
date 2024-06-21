@@ -1,0 +1,13 @@
+# go-linter
+
+[Go で作る自作 Linter 開発入門 - emahiro/b.log](https://ema-hiro.hatenablog.com/entry/2021/08/02/035253)
+
+[GoのAST全部見る - \*\*\*の日記](https://monpoke1.hatenablog.com/entry/2018/12/16/110943)
+
+
+##### get ast
+
+```sh
+go install golang.org/x/tools/cmd/gotype
+gotype -ast ./main.go
+```
